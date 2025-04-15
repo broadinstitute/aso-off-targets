@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ASO Off-Target Checker</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="submit"] { padding: 8px; margin-bottom: 10px; }
+        .results { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
+        .results h2 { margin-top: 0; }
+        .hit { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>ASO Off-Target Checker (Remote BLAST)</h1>
+    <form method="POST">
+        <label for="aso_sequence">Enter your ASO sequence:</label>
+        <textarea id="aso_sequence" name="aso_sequence" required></textarea>
+
+        <label for="evalue">E-value threshold:</label>
+        <input type="text" id="evalue" name="evalue" value="0.01">
+
+        <label for="identity">Minimum % Identity:</label>
+        <input type="text" id="identity" name="identity" value="80">
+
+        <input type="submit" value="Run BLAST">
+    </form>
+
+    {% if results %}
+        <div class="results">
+            <h2>BLAST Results (Human RefSeq RNA)</h2>
+            {% if results is string %}
+                <p>{{ results }}</p>
+            {% elif results %}
+                <pre>
+Query ID\tSubject ID\t% Identity\tAlignment Length\tMismatches\tGap Opens\tQuery Start\tQuery End\tSubject Start\tSubject End\tE-value\tBit Score
+                </pre>
+                {% for hit in results %}
+                    <div class="hit">
+                        <pre>
+{{ hit.query_id }}\t{{ hit.subject_id }}\t{{ hit.identity }}\t{{ hit.alignment_length }}\t{{ hit.mismatches }}\t{{ hit.gap_opens }}\t{{ hit.query_start }}\t{{ hit.query_end }}\t{{ hit.subject_start }}\t{{ hit.subject_end }}\t{{ hit.evalue }}\t{{ hit.bit_score }}
+                        </pre>
+                    </div>
+                {% endfor %}
+                <form action="/download_results" method="get">
+                    <input type="hidden" name="results_data" value="{% for hit in results %}{{ hit.query_id }}\t{{ hit.subject_id }}\t{{ hit.identity }}\t{{ hit.alignment_length }}\t{{ hit.mismatches }}\t{{ hit.gap_opens }}\t{{ hit.query_start }}\t{{ hit.query_end }}\t{{ hit.subject_start }}\t{{ hit.subject_end }}\t{{ hit.evalue }}\t{{ hit.bit_score }}\n{% endfor %}">
+                    <input type="submit" value="Download Results as Text File">
+                </form>
+            {% else %}
+                <p>No significant hits found based on your criteria.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</body>
+</html>
