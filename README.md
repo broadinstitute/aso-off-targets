@@ -1,11 +1,6 @@
-Here's a comprehensive `README.md` for your ASO Off-Target Checker application:
-
-```markdown
 # ASO Off-Target Checker
 
 A Flask web application for checking antisense oligonucleotide (ASO) off-target effects using NCBI BLAST.
-
-![Screenshot of ASO Off-Target Checker](screenshot.png) *(Example screenshot - add your own later)*
 
 ## Features
 
@@ -167,18 +162,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - NCBI for BLAST software and databases
 - Flask for web framework
 - Pandas for data processing
-```
-
-### Key Notes About BLASTDB:
-
-1. **Critical Requirement**: I've emphasized the need to set the `BLASTDB` environment variable in multiple sections since this is a common point of failure.
-
-2. **Troubleshooting Section**: Added specific guidance for database-related errors.
-
-3. **Installation Instructions**: Included clear steps for verifying BLAST installation.
-
-4. **Technical Details**: Explained the BLAST parameters being used so users understand the analysis.
-
-5. **Visual Cues**: Left a placeholder for a screenshot (you should add an actual screenshot later).
-
-This README provides comprehensive documentation while keeping the BLASTDB requirement prominent. Users should have all necessary information to install, configure, and troubleshoot the application.
