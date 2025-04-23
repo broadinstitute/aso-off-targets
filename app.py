@@ -17,15 +17,14 @@ def index():
         aso_sequence = request.form.get('aso_sequence', 'CACTTTGTGAGTATTC').upper()
         evalue = request.form.get('evalue', '1000')
         max_mismatch = int(request.form.get('identity', '4'))
-        species = request.form.get('species', 'human')  # Get selected species
+        species = request.form.get('species', 'human')
 
-        # Map species to taxid
         taxid_map = {
             'human': '9606',
             'mouse': '10090',
             'rat': '10116'
         }
-        taxid = taxid_map.get(species, '9606')  # Default to human
+        taxid = taxid_map.get(species, '9606')
 
         if aso_sequence:
             if not all(c in 'ACGTN' for c in aso_sequence):
@@ -37,7 +36,8 @@ def index():
                 results_df = parse_blast_xml(blast_xml, len(aso_sequence), max_mismatch)
                 results_df, results_html = format_results_to_html(results_df)
                 
-                if not results_df.empty:
+                # Modified this section to handle None results_df
+                if results_df is not None and not results_df.empty:
                     output = io.StringIO()
                     output.write("\t".join([
                         "Index", "Name", "Accession", "Mismatch", "Alignment"
@@ -59,7 +59,7 @@ def index():
     return render_template('index.html', 
                          results_html=results_html,
                          results_data=results_data,
-                         selected_species=request.form.get('species', 'human'))  # Pass selected species back
+                         selected_species=request.form.get('species', 'human'))
 
 def run_remote_blast_xml(sequence, evalue, taxid='9606'):
     """Runs BLAST with XML output format"""
@@ -141,7 +141,10 @@ def parse_blast_xml(xml_file, query_length, max_mismatch):
 def format_results_to_html(df):
     """Format the results DataFrame into HTML"""
     if df.empty:
-        return "<p>No significant hits found based on your criteria.</p>"
+        # Return empty DataFrame with the same columns and a message
+        empty_df = pd.DataFrame(columns=['Index', 'Name', 'Accession', 'Mismatch', 'Alignment'])
+        message = "<div class='no-results'><p>No significant hits found based on your criteria.</p></div>"
+        return empty_df, message
     
     # Extract gene names from Hit_Definition
     df['Name'] = df['Hit_Definition'].str.extract(r".*\(([a-zA-Z0-9]+)\),.*")
@@ -197,6 +200,13 @@ def format_results_to_html(df):
             display: block;
             content: "";
             margin: 2px 0;
+        }}
+        .no-results {{
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }}
     </style>
     """

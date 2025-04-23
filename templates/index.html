@@ -20,6 +20,24 @@
             padding: 0;
             margin: 10px 0;
         }
+        .test-sequence-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .test-sequence-btn:hover {
+            background-color: #e0e0e0;
+        }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            font-size: 0.9em;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -27,8 +45,9 @@
     
     <div class="form-container">
         <form method="POST" id="blast-form">
-            <label for="aso_sequence">Enter the query ASO sequence:</label>
-            <textarea id="aso_sequence" name="aso_sequence" required>CACTTTGTGAGTATTC</textarea>
+            <label for="aso_sequence">Enter query ASO sequence:</label>
+            <textarea id="aso_sequence" name="aso_sequence" required placeholder="Enter ASO sequence here..."></textarea>
+            <button type="button" class="test-sequence-btn" onclick="insertTestSequence()">Insert Test Sequence</button>
 
             <label for="species">Species:</label>
             <select id="species" name="species">
@@ -66,15 +85,17 @@
                 {% if selected_species == 'human' %}Human{% endif %}
                 {% if selected_species == 'mouse' %}Mouse{% endif %}
                 {% if selected_species == 'rat' %}Rat{% endif %}
-                RefSeq Select RNA )
+                RefSeq Select RNA)
             </h2>
             {{ results_html|safe }}
             
-            <form action="/download_results" method="get">
-                <input type="hidden" name="results_data" value="{{ results_data }}">
-                <input type="hidden" name="species" value="{{ selected_species }}">
-                <input type="submit" value="Download Results as Text File">
-            </form>
+            {% if results_data %}
+                <form action="/download_results" method="get">
+                    <input type="hidden" name="results_data" value="{{ results_data }}">
+                    <input type="hidden" name="species" value="{{ selected_species }}">
+                    <input type="submit" value="Download Results as Text File">
+                </form>
+            {% endif %}
         </div>
     {% endif %}
 
@@ -95,6 +116,16 @@
                 button.textContent = '▼ Advanced Options';
             }
         }
+
+        function insertTestSequence() {
+            document.getElementById('aso_sequence').value = 'CACTTTGTGAGTATTC';
+        }
     </script>
+
+    <footer>
+        <p>Author: John Carlos Ignacio (jignacio@broadinstitute.org)</p>
+        <p>Source code: <a href="https://github.com/broadinstitute/aso-offtarget-checker">https://github.com/broadinstitute/aso-offtarget-checker</a></p>
+    </footer>
+
 </body>
 </html>
