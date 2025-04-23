@@ -2,7 +2,7 @@
 
 A Flask web application for checking antisense oligonucleotide (ASO) off-target effects using NCBI BLAST.
 
-Based on the work of Eric Vallabh Minikel, PhD from his report entitled *In silico off-targets analysis for PrP-lowering divalent siRNA 2439-exNA*.
+This tool was based on the report entitled *In silico off-targets analysis for PrP-lowering divalent siRNA 2439-exNA* of **Eric Vallabh Minikel, PhD**.
 
 ## Features
 

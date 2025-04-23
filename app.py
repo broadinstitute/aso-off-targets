@@ -13,21 +13,24 @@ app = Flask(__name__)
 def index():
     results_html = None
     results_data = None
+    submitted_sequence = ''  # Add this line
+    
     if request.method == 'POST':
-        aso_sequence = request.form.get('aso_sequence', 'CACTTTGTGAGTATTC').upper()
+        aso_sequence = request.form.get('aso_sequence', '')
+        submitted_sequence = aso_sequence  # Store the submitted sequence
         evalue = request.form.get('evalue', '1000')
         max_mismatch = int(request.form.get('identity', '4'))
         species = request.form.get('species', 'human')
-
+        
         taxid_map = {
             'human': '9606',
             'mouse': '10090',
             'rat': '10116'
         }
         taxid = taxid_map.get(species, '9606')
-
+        
         if aso_sequence:
-            if not all(c in 'ACGTN' for c in aso_sequence):
+            if not all(c in 'acgtnACGTN' for c in aso_sequence):
                 return render_template('index.html', 
                                     error="Invalid sequence - only ACGTN characters allowed")
             
@@ -54,12 +57,13 @@ def index():
                     
                     results_data = output.getvalue()
                 
-                os.remove(blast_xml)
-
+                #os.remove(blast_xml)
+                
     return render_template('index.html', 
                          results_html=results_html,
                          results_data=results_data,
-                         selected_species=request.form.get('species', 'human'))
+                         selected_species=request.form.get('species', 'human'),
+                         submitted_sequence=submitted_sequence)
 
 def run_remote_blast_xml(sequence, evalue, taxid='9606'):
     """Runs BLAST with XML output format"""
@@ -67,7 +71,7 @@ def run_remote_blast_xml(sequence, evalue, taxid='9606'):
         temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".xml")
         output_path = temp_file.name
         temp_file.close()
-
+        
         command = [
             'blastn',
             '-query', '-',
@@ -79,17 +83,17 @@ def run_remote_blast_xml(sequence, evalue, taxid='9606'):
             '-evalue', str(evalue),
             '-taxids', str(taxid)  # Now using parameter
         ]
-
+        
         process = subprocess.Popen(command, stdin=subprocess.PIPE, text=True)
         process.communicate(input=sequence)
-
+        
         if process.returncode == 0:
             return output_path
         else:
             if os.path.exists(output_path):
                 os.remove(output_path)
             return None
-
+            
     except Exception as e:
         print(f"Error running BLAST: {e}")
         return None
@@ -221,7 +225,7 @@ def download_results():
     
     if not results_data:
         return "No results to download"
-
+    
     # Create a temporary file
     with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt') as tmp_file:
         tmp_file.write(results_data)

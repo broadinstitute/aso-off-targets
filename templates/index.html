@@ -46,7 +46,7 @@
     <div class="form-container">
         <form method="POST" id="blast-form">
             <label for="aso_sequence">Enter query ASO sequence:</label>
-            <textarea id="aso_sequence" name="aso_sequence" required placeholder="Enter ASO sequence here..."></textarea>
+            <textarea id="aso_sequence" name="aso_sequence" required placeholder="Enter ASO sequence here...">{{ submitted_sequence | default('') }}</textarea>
             <button type="button" class="test-sequence-btn" onclick="insertTestSequence()">Insert Test Sequence</button>
 
             <label for="species">Species:</label>
