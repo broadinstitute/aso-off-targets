@@ -3,54 +3,98 @@
 <head>
     <title>ASO Off-Target Checker</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        textarea { width: 100%; height: 150px; margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="text"], input[type="submit"] { padding: 8px; margin-bottom: 10px; }
-        .results { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
-        .results h2 { margin-top: 0; }
-        .hit { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; }
+        body { font-family: sans-serif; margin: 20px; max-width: 1200px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; font-family: monospace; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="submit"], select { padding: 8px; margin-bottom: 10px; }
+        .form-container { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+        .error { color: red; margin: 10px 0; }
+        .loading { display: none; margin: 20px 0; }
+        .advanced-options { margin-top: 15px; display: none; }
+        .toggle-options { 
+            background: none;
+            border: none;
+            color: #0066cc;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>ASO Off-Target Checker (Remote BLAST)</h1>
-    <form method="POST">
-        <label for="aso_sequence">Enter your ASO sequence:</label>
-        <textarea id="aso_sequence" name="aso_sequence" required></textarea>
+    <h1>ASO Off-Target Checker (BLAST)</h1>
+    
+    <div class="form-container">
+        <form method="POST" id="blast-form">
+            <label for="aso_sequence">Enter the query ASO sequence:</label>
+            <textarea id="aso_sequence" name="aso_sequence" required>CACTTTGTGAGTATTC</textarea>
 
-        <label for="evalue">E-value threshold:</label>
-        <input type="text" id="evalue" name="evalue" value="0.01">
+            <label for="species">Species:</label>
+            <select id="species" name="species">
+                <option value="human" {% if selected_species == 'human' %}selected{% endif %}>Human (Homo sapiens)</option>
+                <option value="mouse" {% if selected_species == 'mouse' %}selected{% endif %}>Mouse (Mus musculus)</option>
+                <option value="rat" {% if selected_species == 'rat' %}selected{% endif %}>Rat (Rattus norvegicus)</option>
+            </select>
 
-        <label for="identity">Minimum % Identity:</label>
-        <input type="text" id="identity" name="identity" value="80">
+            <input type="submit" value="Run BLAST">
+            <br />
+            <button type="button" class="toggle-options" onclick="toggleAdvanced()">▼ Advanced Options</button>
+            
+            <div class="advanced-options" id="advancedOptions">
+                <label for="evalue">E-value threshold:</label>
+                <input type="text" id="evalue" name="evalue" value="1000">
 
-        <input type="submit" value="Run BLAST">
-    </form>
+                <label for="identity">Maximum allowed mismatches:</label>
+                <input type="text" id="identity" name="identity" value="4">
+            </div>
 
-    {% if results %}
+        </form>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <div class="loading" id="loading">
+            <p>Running BLAST search... This may take a moment...</p>
+        </div>
+    </div>
+
+    {% if results_html %}
         <div class="results">
-            <h2>BLAST Results (Human RefSeq RNA)</h2>
-            {% if results is string %}
-                <p>{{ results }}</p>
-            {% elif results %}
-                <pre>
-Query ID\tSubject ID\t% Identity\tAlignment Length\tMismatches\tGap Opens\tQuery Start\tQuery End\tSubject Start\tSubject End\tE-value\tBit Score
-                </pre>
-                {% for hit in results %}
-                    <div class="hit">
-                        <pre>
-{{ hit.query_id }}\t{{ hit.subject_id }}\t{{ hit.identity }}\t{{ hit.alignment_length }}\t{{ hit.mismatches }}\t{{ hit.gap_opens }}\t{{ hit.query_start }}\t{{ hit.query_end }}\t{{ hit.subject_start }}\t{{ hit.subject_end }}\t{{ hit.evalue }}\t{{ hit.bit_score }}
-                        </pre>
-                    </div>
-                {% endfor %}
-                <form action="/download_results" method="get">
-                    <input type="hidden" name="results_data" value="{% for hit in results %}{{ hit.query_id }}\t{{ hit.subject_id }}\t{{ hit.identity }}\t{{ hit.alignment_length }}\t{{ hit.mismatches }}\t{{ hit.gap_opens }}\t{{ hit.query_start }}\t{{ hit.query_end }}\t{{ hit.subject_start }}\t{{ hit.subject_end }}\t{{ hit.evalue }}\t{{ hit.bit_score }}\n{% endfor %}">
-                    <input type="submit" value="Download Results as Text File">
-                </form>
-            {% else %}
-                <p>No significant hits found based on your criteria.</p>
-            {% endif %}
+            <h2>BLAST Results (
+                {% if selected_species == 'human' %}Human{% endif %}
+                {% if selected_species == 'mouse' %}Mouse{% endif %}
+                {% if selected_species == 'rat' %}Rat{% endif %}
+                RefSeq Select RNA )
+            </h2>
+            {{ results_html|safe }}
+            
+            <form action="/download_results" method="get">
+                <input type="hidden" name="results_data" value="{{ results_data }}">
+                <input type="hidden" name="species" value="{{ selected_species }}">
+                <input type="submit" value="Download Results as Text File">
+            </form>
         </div>
     {% endif %}
+
+    <script>
+        document.getElementById('blast-form').addEventListener('submit', function() {
+            document.getElementById('loading').style.display = 'block';
+        });
+
+        function toggleAdvanced() {
+            const options = document.getElementById('advancedOptions');
+            const button = document.querySelector('.toggle-options');
+            
+            if (options.style.display === 'none' || !options.style.display) {
+                options.style.display = 'block';
+                button.textContent = '▲ Advanced Options';
+            } else {
+                options.style.display = 'none';
+                button.textContent = '▼ Advanced Options';
+            }
+        }
+    </script>
 </body>
 </html>
